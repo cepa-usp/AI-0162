@@ -91,6 +91,7 @@
 		}
 		
 		private var wrongWcolor:Boolean = false;
+		private var wrongFilter:GlowFilter = new GlowFilter(0xCC0000);
 		private function finalizaExec(e:MouseEvent):void 
 		{
 			if (checkForFinish()) {
@@ -104,7 +105,7 @@
 						nCertas++;
 						trace(Peca(child).nome);
 					}else {
-						child.filters = [fundoFilter];
+						child.filters = [wrongFilter];
 						wrongWcolor = true;
 					}
 				}
