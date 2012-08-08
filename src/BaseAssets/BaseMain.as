@@ -171,7 +171,7 @@ package BaseAssets
 		private function adicionaBotoes():void 
 		{
 			botoes.addButton(new CreditBtn(), openCreditos, "Licença e créditos");
-			botoes.addButton(new ResetBtn(), reset, "Reiniciar");
+			//botoes.addButton(new ResetBtn(), reset, "Reiniciar");
 			botoes.addButton(new InstructionBtn(), openOrientacoes, "Orientações");
 			botoes.addButton(new InfoBtn(), iniciaTutorial, "Reiniciar tutorial");
 			if (hasStats) botoes.addButton(new BtStats(), openStats, "Desempenho");

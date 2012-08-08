@@ -42,6 +42,12 @@
 			addListeners();
 			createAnswer();
 			
+			if (!isNaN(Number(root.loaderInfo.parameters["tentativas"]))) {
+				var nRoot:int = int(root.loaderInfo.parameters["tentativas"]);
+				if (nRoot <= 0) nRoot = 1;
+				maxTentativas = nRoot;
+			}
+			
 			if (ExternalInterface.available) {
 				initLMSConnection();
 				if (mementoSerialized != null) {
@@ -90,47 +96,60 @@
 			finaliza.buttonMode = true;
 		}
 		
+		private var maxTentativas:int = 4;
+		private var tentativaAtual:int = 1;
 		private var wrongWcolor:Boolean = false;
-		private var wrongFilter:GlowFilter = new GlowFilter(0xCC0000);
+		private var wrongFilter:GlowFilter = new GlowFilter(0xCC0000, 1, 1, 1, 2, 3, true);
 		private function finalizaExec(e:MouseEvent):void 
 		{
-			if (checkForFinish()) {
-				var nCertas:int = 0;
-				var nPecas:int = 0;
-				
-				for each (var child:Peca in pecas) 
-				{
-					nPecas++;
-					if(Peca(child).fundo.indexOf(Peca(child).currentFundo) != -1){
-						nCertas++;
-						trace(Peca(child).nome);
-					}else {
-						child.filters = [wrongFilter];
-						wrongWcolor = true;
+			if(tentativaAtual < maxTentativas){
+				if (checkForFinish()) {
+					tentativaAtual++;
+					var nCertas:int = 0;
+					var nPecas:int = 0;
+					
+					for each (var child:Peca in pecas) 
+					{
+						nPecas++;
+						if(Peca(child).fundo.indexOf(Peca(child).currentFundo) != -1){
+							nCertas++;
+							trace(Peca(child).nome);
+						}else {
+							child.fundoT.filters = [wrongFilter];
+							wrongWcolor = true;
+						}
 					}
+					
+					var currentScore:Number = int((nCertas / nPecas) * 100);
+					
+					if (currentScore < 100) {
+						if (tentativaAtual < maxTentativas) {
+							feedbackScreen.setText("Ops!... \nReveja sua resposta.\nOs elementos destacados em vermelho estão incorretos. Você ainda tem " + (maxTentativas - tentativaAtual) + " tentativa(s).");
+							completed = false;
+						}else {
+							feedbackScreen.setText("Os elementos destacados em vermelho estão incorretos.\nVocê atingiu o número máximo de tentativas, sua pontuação ficou em " + score + "%.");
+							completed = true;
+							travaPecas();
+						}
+					}
+					else {
+						feedbackScreen.setText("Parabéns!\nSua resposta está correta!");
+						completed = true;
+						travaPecas();
+						//fixOverOut();
+					}
+					
+					//if (!completed) {
+						//completed = true;
+						score = currentScore;
+						saveStatus();
+						commit();
+					//}
+				}else {
+					feedbackScreen.setText("Você precisa posicionar todas as peças antes de finalizar.");
 				}
-				
-				var currentScore:Number = int((nCertas / nPecas) * 100);
-				
-				if (currentScore < 100) {
-					feedbackScreen.setText("Ops!... \nReveja sua resposta.\nOs elementos destacados em vermelho estão incorretos.");
-					completed = false;
-				}
-				else {
-					feedbackScreen.setText("Parabéns!\nSua resposta está correta!");
-					fixOverOut();
-					travaPecas();
-					completed = true;
-				}
-				
-				//if (!completed) {
-					//completed = true;
-					score = currentScore;
-					saveStatus();
-					commit();
-				//}
 			}else {
-				feedbackScreen.setText("Você precisa posicionar todas as peças antes de finalizar.");
+				feedbackScreen.setText("Você excedeu o número máximo de tentativas.\nSua pontuação ficou em " + score + "%.");
 			}
 		}
 		
@@ -140,12 +159,14 @@
 			{
 				Peca(child).lock();
 			}
-			
-			//finaliza.mouseEnabled = false;
-			//finaliza.alpha = 0.5;
-			
-			//botoes.resetButton.mouseEnabled = false;
-			//botoes.resetButton.alpha = 0.5;
+		}
+		
+		private function destravaPecas():void
+		{
+			for each (var child:Peca in pecas) 
+			{
+				Peca(child).addListeners();
+			}
 		}
 		
 		private function verificaFinaliza():void 
@@ -186,6 +207,8 @@
 				Peca(child).buttonMode = true;
 				Peca(child).gotoAndStop(2);
 			}
+			
+			randomizePositions();
 		}
 		
 		private function saveStatusForRecovery(e:MouseEvent = null):void
@@ -195,6 +218,7 @@
 			status.completed = completed;
 			status.score = score;
 			status.pecas = new Object();
+			status.tentativaAtual = tentativaAtual;
 			
 			for each (var child:Peca in pecas)  {
 				if (Peca(child).currentFundo != null) status.pecas[child.name] = Peca(child).currentFundo.name;
@@ -221,11 +245,21 @@
 			if (!connected) {
 				completed = status.completed;
 				score = status.score;
+				tentativaAtual = status.tentativaAtual;
 			}
 			
 			if (completed) {
 				fixOverOut();
 				travaPecas();
+				if (score < 100) {
+					for each (child in pecas) 
+					{
+						if(Peca(child).fundo.indexOf(Peca(child).currentFundo) == -1){
+							child.fundoT.filters = [wrongFilter];
+							wrongWcolor = true;
+						}
+					}
+				}
 			}
 		}
 		
@@ -238,11 +272,12 @@
 			if (wrongWcolor) {
 				for each (var item:Peca in pecas) 
 				{
-					item.filters = [];
+					item.fundoT.filters = [];
 				}
 				wrongWcolor = false;
 			}
 			pecaDragging = Peca(e.target);
+			travaPecas();
 			
 			var peca:Peca = pecaDragging;
 			peca.removeEventListener(MouseEvent.MOUSE_OUT, outChid);
@@ -335,6 +370,7 @@
 					peca.x = fundoDrop.x;
 					peca.y = fundoDrop.y;
 					peca.gotoAndStop(2);
+					liberaMouseDown();
 				}else {
 					if(peca.currentFundo != null){
 						var pecaFundo:Peca = Peca(fundoDrop.currentPeca);
@@ -344,7 +380,7 @@
 						//tweenX = new Tween(peca, "x", None.easeNone, peca.x, fundoDrop.x, tweenTime, true);
 						//tweenY = new Tween(peca, "y", None.easeNone, peca.y, fundoDrop.y + 20, tweenTime, true);
 						
-						Actuate.tween(pecaFundo, tweenTime, { x:fundoPeca.x, y:fundoPeca.y} ).ease(Linear.easeNone);
+						Actuate.tween(pecaFundo, tweenTime, { x:fundoPeca.x, y:fundoPeca.y} ).ease(Linear.easeNone).onComplete(liberaMouseDown);
 						//tweenX2 = new Tween(pecaFundo, "x", None.easeNone, pecaFundo.x, fundoPeca.x, tweenTime, true);
 						//tweenY2 = new Tween(pecaFundo, "y", None.easeNone, pecaFundo.y, fundoPeca.y + 20, tweenTime, true);
 						
@@ -362,7 +398,7 @@
 						peca.y = fundoDrop.y;
 						peca.gotoAndStop(2);
 						
-						Actuate.tween(pecaFundo, tweenTime, { x:pecaFundo.inicialPosition.x, y:pecaFundo.inicialPosition.y} ).ease(Linear.easeNone);
+						Actuate.tween(pecaFundo, tweenTime, { x:pecaFundo.inicialPosition.x, y:pecaFundo.inicialPosition.y} ).ease(Linear.easeNone).onComplete(liberaMouseDown);
 						//tweenX2 = new Tween(pecaFundo, "x", None.easeNone, pecaFundo.x, pecaFundo.inicialPosition.x, tweenTime, true);
 						//tweenY2 = new Tween(pecaFundo, "y", None.easeNone, pecaFundo.y, pecaFundo.inicialPosition.y, tweenTime, true);
 						
@@ -379,16 +415,21 @@
 					peca.currentFundo = null;
 				}
 				
-				Actuate.tween(peca, tweenTime, { x:peca.inicialPosition.x, y:peca.inicialPosition.y} ).ease(Linear.easeNone);
+				Actuate.tween(peca, tweenTime, { x:peca.inicialPosition.x, y:peca.inicialPosition.y} ).ease(Linear.easeNone).onComplete(liberaMouseDown);
 				//tweenX = new Tween(peca, "x", None.easeNone, peca.x, peca.inicialPosition.x, tweenTime, true);
 				//tweenY = new Tween(peca, "y", None.easeNone, peca.y, peca.inicialPosition.y, tweenTime, true);
-				peca.gotoAndStop(1);
+				peca.gotoAndStop(2);
 			}
 			
 			//verificaFinaliza();
 			
 			//setTimeout(saveStatus, (tweenTime + 0.1) * 1000);
 			Actuate.timer(tweenTime + 0.1).onComplete(saveStatus);
+		}
+		
+		private function liberaMouseDown():void
+		{
+			destravaPecas();
 		}
 		
 		private function getFundo(position:Point):Fundo 
@@ -474,32 +515,49 @@
 				child.nome = "peca20";
 			}
 			
-			randomizeInicialPosition(child);
-			
 			//pecasLayer.addChild(child);
 		}
 		
-		private function randomizeInicialPosition(peca:Peca):void
+		private function randomizePositions():void
 		{
-			var indexPeca:int = int(peca.nome.replace("peca", ""));
+			//var nSort:int = Math.min(Math.max(Math.floor(Math.random() * (fundosToSort.length / 2)), 3), 8);
+			var nSort:int = Math.floor(Math.random() * 7) + 3;
 			
-			var indexSort:int = Math.floor(Math.random() * fundosToSort.length);
-			var indexFundo:int = int(fundosToSort[indexSort].name.replace("fundo", ""));
-			
-			while (indexPeca == indexFundo) {
-				indexSort = Math.floor(Math.random() * fundosToSort.length);
-				indexFundo = int(fundosToSort[indexSort].name.replace("fundo", ""));
+			for (var i:int = 1; i <= 20 ; i+=2) 
+			{
+				var pecaE:Peca = getPecaByName("peca" + String(i));
+				var pecaD:Peca = getPecaByName("peca" + String(i+1));
+				var newIndexPeca:int = i + (2 * nSort);
+				if (newIndexPeca > 20) newIndexPeca -= 20;
+				if(Math.random() < 0.5){
+					var fundoPecaE:Fundo = this["fundo" + String(newIndexPeca)];
+					var fundoPecaD:Fundo = this["fundo" + String(newIndexPeca + 1)];
+				}else {
+					fundoPecaE = this["fundo" + String(newIndexPeca + 1)];
+					fundoPecaD = this["fundo" + String(newIndexPeca)];
+				}
+				pecaE.inicialPosition = new Point(fundoPecaE.x, fundoPecaE.y);
+				pecaE.x = fundoPecaE.x;
+				pecaE.y = fundoPecaE.y;
+				pecaE.currentFundo = fundoPecaE;
+				fundoPecaE.currentPeca = pecaE;
+				
+				pecaD.inicialPosition = new Point(fundoPecaD.x, fundoPecaD.y);
+				pecaD.x = fundoPecaD.x;
+				pecaD.y = fundoPecaD.y;
+				pecaD.currentFundo = fundoPecaD;
+				fundoPecaD.currentPeca = pecaD;
+			}
+		}
+		
+		private function getPecaByName(name:String):Peca
+		{
+			for each (var peca:Peca in pecas) 
+			{
+				if (peca.nome == name) return peca;
 			}
 			
-			var fundoInicial:Fundo = fundosToSort[indexSort];
-			
-			peca.inicialPosition = new Point(fundoInicial.x, fundoInicial.y);
-			peca.x = fundoInicial.x;
-			peca.y = fundoInicial.y;
-			peca.currentFundo = fundoInicial;
-			fundoInicial.currentPeca = peca;
-			
-			fundosToSort.splice(indexSort, 1);
+			return null;
 		}
 		
 		private function makeOverOut(peca:MovieClip):void
@@ -600,15 +658,11 @@
 			
 			wrongWcolor = false;
 			
-			for each (var item:Fundo in fundos) 
-			{
-				fundosToSort.push(item);
+			for each (var child:Peca in pecas)  {
+				child.fundoT.filters = [];
 			}
 			
-			for each (var child:Peca in pecas)  {
-				child.filters = [];
-				randomizeInicialPosition(child);
-			}
+			randomizePositions();
 			
 			//verificaFinaliza();
 			saveStatus();
@@ -735,6 +789,7 @@
 				
 				//unmarshalObjects(mementoSerialized);
 				scormExercise = 1;
+				tentativaAtual = int(scorm.get("cmi.location"));
 				score = Number(stringScore.replace(",", "."));
 				
 				var success:Boolean = scorm.set("cmi.score.min", "0");
@@ -777,7 +832,7 @@
 				success = scorm.set("cmi.completion_status", (completed ? "completed" : "incomplete"));
 
 				// Salva no LMS o exercício que deve ser exibido quando a AI for acessada novamente.
-				success = scorm.set("cmi.location", scormExercise.toString());
+				success = scorm.set("cmi.location", tentativaAtual.toString());
 				
 				// Salva no LMS a string que representa a situação atual da AI para ser recuperada posteriormente.
 				//mementoSerialized = marshalObjects();

@@ -29,6 +29,7 @@ package
 		
 		public function addListeners():void
 		{
+			lock();
 			addEventListener(MouseEvent.MOUSE_DOWN, initArraste);
 		}
 		
