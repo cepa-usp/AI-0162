@@ -36,6 +36,11 @@
 		private var pecasWover:Array = [];
 		private var fundosToSort:Array = [];
 		
+		private var maxTentativas:int = 1;
+		private var tentativaAtual:int = 0;
+		private var wrongWcolor:Boolean = false;
+		private var wrongFilter:GlowFilter = new GlowFilter(0xCC0000, 1, 1, 1, 2, 3, true);
+		
 		override protected function init():void 
 		{
 			organizeLayers();
@@ -47,6 +52,8 @@
 				if (nRoot <= 0) nRoot = 1;
 				maxTentativas = nRoot;
 			}
+			
+			tentativas.text = "Tentativa " + (tentativaAtual + 1) + " de " + maxTentativas;
 			
 			if (ExternalInterface.available) {
 				initLMSConnection();
@@ -96,10 +103,6 @@
 			finaliza.buttonMode = true;
 		}
 		
-		private var maxTentativas:int = 4;
-		private var tentativaAtual:int = 1;
-		private var wrongWcolor:Boolean = false;
-		private var wrongFilter:GlowFilter = new GlowFilter(0xCC0000, 1, 1, 1, 2, 3, true);
 		private function finalizaExec(e:MouseEvent):void 
 		{
 			if(tentativaAtual < maxTentativas){
@@ -126,14 +129,17 @@
 						if (tentativaAtual < maxTentativas) {
 							feedbackScreen.setText("Ops!... \nReveja sua resposta.\nOs elementos destacados em vermelho estão incorretos. Você ainda tem " + (maxTentativas - tentativaAtual) + " tentativa(s).");
 							completed = false;
+							tentativas.text = "Tentativa " + (tentativaAtual + 1) + " de " + maxTentativas + " : " + currentScore + "%";
 						}else {
 							feedbackScreen.setText("Os elementos destacados em vermelho estão incorretos.\nVocê atingiu o número máximo de tentativas, sua pontuação ficou em " + score + "%.");
 							completed = true;
 							travaPecas();
+							tentativas.text = "Atividade finalizada: " + currentScore + "%";
 						}
 					}
 					else {
 						feedbackScreen.setText("Parabéns!\nSua resposta está correta!");
+						tentativas.text = "Atividade finalizada: " + currentScore + "%";
 						completed = true;
 						travaPecas();
 						//fixOverOut();
@@ -248,6 +254,8 @@
 				tentativaAtual = status.tentativaAtual;
 			}
 			
+			tentativas.text = "Tentativa " + (tentativaAtual + 1) + " de " + maxTentativas + " : " + score + "%";
+			
 			if (completed) {
 				fixOverOut();
 				travaPecas();
@@ -260,6 +268,7 @@
 						}
 					}
 				}
+				tentativas.text = "Atividade finalizada: " + score + "%";
 			}
 		}
 		
@@ -675,10 +684,7 @@
 		private var pointsTuto:Array;
 		private var tutoBaloonPos:Array;
 		private var tutoPos:int;
-		private var tutoSequence:Array = [	"Veja aqui as orientações.",
-											"Arraste os conceitos e termos de ligação...", 
-											"... para os campos corretos.",
-											"Pressione \"terminei\" para avaliar sua resposta."];
+		private var tutoSequence:Array;
 		
 		override public function iniciaTutorial(e:MouseEvent = null):void  
 		{
@@ -690,14 +696,19 @@
 				layerTuto.addChild(balao);
 				balao.visible = false;
 				
-				pointsTuto = 	[new Point(590, 505),
-								new Point(355 , 476),
+				tutoSequence = ["Veja aqui as orientações.",
+								"Arraste as \"Causas\" e \"Consequências\" para os locais corretos.", 
+								"Vecê terá " + maxTentativas + (maxTentativas > 1 ? " tentativas": " tentativa") + " para isso.",
+								"Pressione \"terminei\" para avaliar sua resposta."];
+				
+				pointsTuto = 	[new Point(565, 555),
+								new Point(315 , 250),
 								new Point(325 , 210),
 								new Point(finaliza.x, finaliza.y - finaliza.height / 2)];
 								
-				tutoBaloonPos = [[CaixaTexto.RIGHT, CaixaTexto.FIRST],
-								[CaixaTexto.BOTTON, CaixaTexto.CENTER],
-								[CaixaTexto.TOP, CaixaTexto.CENTER],
+				tutoBaloonPos = [[CaixaTexto.BOTTON, CaixaTexto.LAST],
+								["", ""],
+								["", ""],
 								[CaixaTexto.BOTTON, CaixaTexto.FIRST]];
 			}
 			balao.removeEventListener(BaseEvent.NEXT_BALAO, closeBalao);
