@@ -288,25 +288,6 @@
 			pecaDragging = Peca(e.target);
 			travaPecas();
 			
-			var peca:Peca = pecaDragging;
-			peca.removeEventListener(MouseEvent.MOUSE_OUT, outChid);
-			
-			if (peca.currentFundo != null) {
-				if (peca.currentFundo is FundoComBorda) {
-					Fundo(peca.currentFundo).fundo.graphics.clear();
-				}
-				peca.gotoAndStop(2);
-				peca.currentFundo.scaleY = 1;
-				//peca.currentFundo.height = alturaPecaOver;
-				peca.currentFundo.y = peca.y;
-				//peca.currentFundo.height = alturaPecaOver;
-				if (peca.currentFundo is FundoComBorda) {
-					drawBorder(Fundo(peca.currentFundo));
-				}
-			}else {
-				peca.gotoAndStop(1);
-			}
-			
 			stage.addEventListener(MouseEvent.MOUSE_MOVE, verifying);
 		}
 		
@@ -420,11 +401,12 @@
 				}
 			}else {
 				if (peca.currentFundo != null) {
-					Fundo(peca.currentFundo).currentPeca = null;
-					peca.currentFundo = null;
+					//Fundo(peca.currentFundo).currentPeca = null;
+					//peca.currentFundo = null;
 				}
 				
-				Actuate.tween(peca, tweenTime, { x:peca.inicialPosition.x, y:peca.inicialPosition.y} ).ease(Linear.easeNone).onComplete(liberaMouseDown);
+				//Actuate.tween(peca, tweenTime, { x:peca.inicialPosition.x, y:peca.inicialPosition.y} ).ease(Linear.easeNone).onComplete(liberaMouseDown);
+				Actuate.tween(peca, tweenTime, { x:peca.currentFundo.x, y:peca.currentFundo.y} ).ease(Linear.easeNone).onComplete(liberaMouseDown);
 				//tweenX = new Tween(peca, "x", None.easeNone, peca.x, peca.inicialPosition.x, tweenTime, true);
 				//tweenY = new Tween(peca, "y", None.easeNone, peca.y, peca.inicialPosition.y, tweenTime, true);
 				peca.gotoAndStop(2);
