@@ -693,12 +693,12 @@
 				pointsTuto = 	[new Point(590, 505),
 								new Point(355 , 476),
 								new Point(325 , 210),
-								new Point(finaliza.x, finaliza.y + finaliza.height / 2)];
+								new Point(finaliza.x, finaliza.y - finaliza.height / 2)];
 								
 				tutoBaloonPos = [[CaixaTexto.RIGHT, CaixaTexto.FIRST],
 								[CaixaTexto.BOTTON, CaixaTexto.CENTER],
 								[CaixaTexto.TOP, CaixaTexto.CENTER],
-								[CaixaTexto.TOP, CaixaTexto.FIRST]];
+								[CaixaTexto.BOTTON, CaixaTexto.FIRST]];
 			}
 			balao.removeEventListener(BaseEvent.NEXT_BALAO, closeBalao);
 			
