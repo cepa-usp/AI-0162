@@ -463,7 +463,7 @@
 				child.fundo = [fundo6];
 				child.nome = "peca6";
 			}else if (child is Peca7) {
-				child.fundo = [fundo7];
+				child.fundo = [fundo7, fundo19];
 				child.nome = "peca7";
 			}else if (child is Peca8) {
 				child.fundo = [fundo8];
@@ -499,7 +499,7 @@
 				child.fundo = [fundo18];
 				child.nome = "peca18";
 			}else if (child is Peca19) {
-				child.fundo = [fundo19];
+				child.fundo = [fundo19, fundo7];
 				child.nome = "peca19";
 			}else if (child is Peca20) {
 				child.fundo = [fundo20];
