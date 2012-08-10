@@ -123,23 +123,24 @@
 						}
 					}
 					
-					var currentScore:Number = int((nCertas / nPecas) * 100);
+					//var currentScore:Number = int((nCertas / nPecas) * 100);
+					score = int((nCertas / nPecas) * 100);
 					
-					if (currentScore < 100) {
+					if (score < 100) {
 						if (tentativaAtual < maxTentativas) {
 							feedbackScreen.setText("Ops!... \nReveja sua resposta.\nOs elementos destacados em vermelho estão incorretos. Você ainda tem " + (maxTentativas - tentativaAtual) + " tentativa(s).");
 							completed = false;
-							tentativas.text = "Tentativa " + (tentativaAtual + 1) + " de " + maxTentativas + " : " + currentScore + "%";
+							tentativas.text = "Tentativa " + (tentativaAtual + 1) + " de " + maxTentativas + " : " + score + "%";
 						}else {
 							feedbackScreen.setText("Os elementos destacados em vermelho estão incorretos.\nVocê atingiu o número máximo de tentativas, sua pontuação ficou em " + score + "%.");
 							completed = true;
 							travaPecas();
-							tentativas.text = "Atividade finalizada: " + currentScore + "%";
+							tentativas.text = "Atividade finalizada: " + score + "%";
 						}
 					}
 					else {
 						feedbackScreen.setText("Parabéns!\nSua resposta está correta!");
-						tentativas.text = "Atividade finalizada: " + currentScore + "%";
+						tentativas.text = "Atividade finalizada: " + score + "%";
 						completed = true;
 						travaPecas();
 						//fixOverOut();
@@ -147,7 +148,7 @@
 					
 					//if (!completed) {
 						//completed = true;
-						score = currentScore;
+						//score = currentScore;
 						saveStatus();
 						commit();
 					//}
@@ -254,7 +255,8 @@
 				tentativaAtual = status.tentativaAtual;
 			}
 			
-			tentativas.text = "Tentativa " + (tentativaAtual + 1) + " de " + maxTentativas + " : " + score + "%";
+			if (tentativaAtual > 0) tentativas.text = "Tentativa " + (tentativaAtual + 1) + " de " + maxTentativas + " : " + score + "%";
+			else tentativas.text = "Tentativa " + (tentativaAtual + 1) + " de " + maxTentativas;
 			
 			if (completed) {
 				fixOverOut();
